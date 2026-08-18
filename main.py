@@ -2,6 +2,7 @@ import os
 import re
 import time
 import threading
+import urllib.request
 import flet as ft
 import yt_dlp
 
@@ -12,9 +13,8 @@ COLOR_MINT = "#87c095"
 COLOR_TEXT = "#dbdee1"
 COLOR_MUTED = "#949ba4"
 
-# --- NUEVA RUTA: CARPETA INTELIGENTE ---
-RUTA_BASE = "/storage/emulated/0/Download"
-RUTA_DESCARGAS = os.path.join(RUTA_BASE, "MintFetch")
+# --- RUTA NATIVA DE ANDROID (Volvemos a la ruta segura) ---
+RUTA_DESCARGAS = "/storage/emulated/0/Download"
 
 def main(page: ft.Page):
     page.title = "MintFetch"
@@ -43,16 +43,22 @@ def main(page: ft.Page):
             size=14
         ),
         actions=[
-            # CORRECCIÓN: Usamos page.close() para cerrar
-            ft.TextButton("Entendido", on_click=lambda e: page.close(dlg_ayuda), style=ft.ButtonStyle(color=COLOR_MINT))
+            # CORRECCIÓN: Llamamos a la función vieja y confiable
+            ft.TextButton("Entendido", on_click=lambda e: cerrar_ayuda(), style=ft.ButtonStyle(color=COLOR_MINT))
         ],
         actions_alignment=ft.MainAxisAlignment.END,
         shape=ft.RoundedRectangleBorder(radius=12)
     )
 
-    # CORRECCIÓN: Usamos page.open() para abrir
+    def cerrar_ayuda():
+        dlg_ayuda.open = False
+        page.update()
+
+    # CORRECCIÓN: Método clásico para abrir el diálogo sin crashear
     def abrir_ayuda(e):
-        page.open(dlg_ayuda)
+        page.dialog = dlg_ayuda
+        dlg_ayuda.open = True
+        page.update()
 
     # Botón Flotante
     page.floating_action_button = ft.FloatingActionButton(
@@ -100,7 +106,7 @@ def main(page: ft.Page):
     )
 
     consola_texto = ft.Text(
-        "[root@android]~ $ MintFetch v1.1 listo.\n[root@android]~ $ Esperando órdenes...",
+        "[root@android]~ $ MintFetch v1.2 listo.\n[root@android]~ $ Esperando órdenes...",
         font_family="monospace",
         color=COLOR_MINT,
         size=11,
@@ -144,9 +150,6 @@ def main(page: ft.Page):
         page.update()
 
         def trabajo_descarga():
-            # Crear la carpeta inteligente si no existe
-            os.makedirs(RUTA_DESCARGAS, exist_ok=True)
-            
             max_intentos = 4
             intento_actual = 1
             descarga_exitosa = False
@@ -187,28 +190,30 @@ def main(page: ft.Page):
 
                     # --- EL NUEVO CEREBRO DE FORMATOS ---
                     if "Ligero" in seleccion:
-                        opts['format'] = '18/b[height<=480]/b' # Formato pre-ensamblado seguro
+                        opts['format'] = 'b[height<=480]/18/best' 
                     elif "Audio" in seleccion:
-                        opts['format'] = 'm4a/bestaudio/best' # M4A nativo para evitar ffmpeg
+                        opts['format'] = 'm4a/bestaudio/best' 
                     else:
-                        opts['format'] = 'best' # MP4 HD pre-ensamblado
+                        opts['format'] = 'best' 
 
                     with yt_dlp.YoutubeDL(opts) as ydl:
                         ydl.download([url])
 
                     descarga_exitosa = True
-                    actualizar_consola("✅ Operación Exitosa. Archivo en /MintFetch")
+                    actualizar_consola("✅ Operación Exitosa. Archivo en /Download")
                     time.sleep(2)
                     txt_url.value = ""
                     actualizar_consola("✅ Esperando nuevo enlace...")
 
                 except Exception as ex:
                     if intento_actual < max_intentos:
-                        actualizar_consola(f"⚠️ Servidor hostil. Reintentando ({intento_actual}/{max_intentos})")
+                        # LA LÍNEA ESPÍA: Ahora nos dirá exactamente qué falla en vez de adivinar
+                        actualizar_consola(f"⚠️ Falla interna: {str(ex)}")
+                        actualizar_consola(f"🔄 Reintentando ({intento_actual}/{max_intentos})")
                         time.sleep(2)
                         intento_actual += 1
                     else:
-                        actualizar_consola("❌ Error crítico. Enlace roto o formato no disponible.")
+                        actualizar_consola("❌ Error crítico definitivo. Ríndete.")
                         break
             
             reiniciar_interfaz()
