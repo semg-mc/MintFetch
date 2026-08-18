@@ -2,7 +2,6 @@ import os
 import re
 import time
 import threading
-import urllib.request
 import flet as ft
 import yt_dlp
 
@@ -13,7 +12,6 @@ COLOR_MINT = "#87c095"
 COLOR_TEXT = "#dbdee1"
 COLOR_MUTED = "#949ba4"
 
-# --- RUTA NATIVA DE ANDROID (Volvemos a la ruta segura) ---
 RUTA_DESCARGAS = "/storage/emulated/0/Download"
 
 def main(page: ft.Page):
@@ -21,7 +19,6 @@ def main(page: ft.Page):
     page.bgcolor = COLOR_BG
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 25
-    
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
@@ -37,13 +34,11 @@ def main(page: ft.Page):
             "🌐 Plataformas Compatibles:\n"
             "• YouTube (Videos y Música)\n"
             "• TikTok (Videos sin marca de agua)\n"
-            "• X (Twitter), Facebook, Instagram\n"
-            "• Reddit, Twitch y muchas más.",
+            "• X (Twitter), Facebook, Instagram",
             color=COLOR_TEXT,
             size=14
         ),
         actions=[
-            # CORRECCIÓN: Llamamos a la función vieja y confiable
             ft.TextButton("Entendido", on_click=lambda e: cerrar_ayuda(), style=ft.ButtonStyle(color=COLOR_MINT))
         ],
         actions_alignment=ft.MainAxisAlignment.END,
@@ -54,13 +49,11 @@ def main(page: ft.Page):
         dlg_ayuda.open = False
         page.update()
 
-    # CORRECCIÓN: Método clásico para abrir el diálogo sin crashear
     def abrir_ayuda(e):
-        page.dialog = dlg_ayuda
+        page.dialog = dlg_ayuda # Registramos el diálogo
         dlg_ayuda.open = True
         page.update()
 
-    # Botón Flotante
     page.floating_action_button = ft.FloatingActionButton(
         content=ft.Text("?", size=24, weight=ft.FontWeight.BOLD, color=COLOR_MINT),
         bgcolor=COLOR_CONSOLE,
@@ -106,7 +99,7 @@ def main(page: ft.Page):
     )
 
     consola_texto = ft.Text(
-        "[root@android]~ $ MintFetch v1.2 listo.\n[root@android]~ $ Esperando órdenes...",
+        "[root@android]~ $ MintFetch v1.3 listo.\n[root@android]~ $ Esperando órdenes...",
         font_family="monospace",
         color=COLOR_MINT,
         size=11,
@@ -128,20 +121,11 @@ def main(page: ft.Page):
         consola_texto.value += f"\n> {texto}"
         page.update()
 
-    def reiniciar_interfaz():
-        txt_url.disabled = False
-        dd_calidad.disabled = False
-        btn_fetch.disabled = False
-        btn_fetch.bgcolor = COLOR_MINT
-        page.update()
-
     def ejecutar_fetch(e):
         url = txt_url.value.strip()
-        if not url:
-            return
+        if not url: return
 
         seleccion = dd_calidad.value
-        
         txt_url.disabled = True
         dd_calidad.disabled = True
         btn_fetch.disabled = True
@@ -156,86 +140,48 @@ def main(page: ft.Page):
 
             while intento_actual <= max_intentos and not descarga_exitosa:
                 try:
-                    estado_ui = {"ultimo_p": -10}
-
-                    def hook_progreso(d):
-                        if d['status'] == 'downloading':
-                            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-                            p_str = ansi_escape.sub('', d.get('_percent_str', '0.0%')).replace('%', '').strip()
-                            try:
-                                p = float(p_str)
-                                if p - estado_ui["ultimo_p"] >= 10:
-                                    actualizar_consola(f"Extrayendo datos: {p_str}%")
-                                    estado_ui["ultimo_p"] = p
-                            except ValueError:
-                                pass
-                        elif d['status'] == 'finished':
-                            actualizar_consola("Descarga completa. Finalizando archivo...")
-                            page.update()
-
-                    class InterceptorLogger:
-                        def debug(self, msg): pass
-                        def info(self, msg): pass
-                        def warning(self, msg): pass
-                        def error(self, msg): pass
-
+                    # DISFRAZ DE NAVEGADOR
                     opts = {
                         'quiet': True,
-                        'progress_hooks': [hook_progreso],
-                        'logger': InterceptorLogger(),
+                        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
                         'nocheckcertificate': True,
                         'geo_bypass': True,
                         'outtmpl': os.path.join(RUTA_DESCARGAS, '%(title).100s.%(ext)s'),
                     }
 
-                    # --- EL NUEVO CEREBRO DE FORMATOS ---
                     if "Ligero" in seleccion:
-                        opts['format'] = 'b[height<=480]/18/best' 
+                        opts['format'] = 'best[height<=480]'
                     elif "Audio" in seleccion:
-                        opts['format'] = 'm4a/bestaudio/best' 
+                        opts['format'] = 'm4a/bestaudio/best'
                     else:
-                        opts['format'] = 'best' 
+                        opts['format'] = 'best'
 
                     with yt_dlp.YoutubeDL(opts) as ydl:
                         ydl.download([url])
 
                     descarga_exitosa = True
-                    actualizar_consola("✅ Operación Exitosa. Archivo en /Download")
-                    time.sleep(2)
+                    actualizar_consola("✅ Operación Exitosa.")
                     txt_url.value = ""
-                    actualizar_consola("✅ Esperando nuevo enlace...")
-
                 except Exception as ex:
                     if intento_actual < max_intentos:
-                        # LA LÍNEA ESPÍA: Ahora nos dirá exactamente qué falla en vez de adivinar
-                        actualizar_consola(f"⚠️ Falla interna: {str(ex)}")
-                        actualizar_consola(f"🔄 Reintentando ({intento_actual}/{max_intentos})")
+                        actualizar_consola(f"⚠️ Reintentando... ({intento_actual})")
                         time.sleep(2)
                         intento_actual += 1
                     else:
-                        actualizar_consola("❌ Error crítico definitivo. Ríndete.")
+                        actualizar_consola(f"❌ Fallo crítico: {str(ex)}")
                         break
             
-            reiniciar_interfaz()
+            txt_url.disabled = False
+            dd_calidad.disabled = False
+            btn_fetch.disabled = False
+            btn_fetch.bgcolor = COLOR_MINT
+            page.update()
 
         threading.Thread(target=trabajo_descarga, daemon=True).start()
 
     btn_fetch.on_click = ejecutar_fetch
 
-    # ENSAMBLAJE FINAL
-    page.add(
-        titulo, 
-        subtitulo,
-        ft.Container(height=15),
-        txt_url,
-        dd_calidad,
-        ft.Container(height=5),
-        btn_fetch,
-        ft.Container(height=15),
-        consola,
-        firma
-    )
+    page.add(titulo, subtitulo, ft.Container(height=15), txt_url, dd_calidad, ft.Container(height=5), btn_fetch, ft.Container(height=15), consola, firma)
 
 if __name__ == "__main__":
     ft.app(main)
-    
