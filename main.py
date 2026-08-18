@@ -2,7 +2,6 @@ import os
 import re
 import time
 import threading
-import urllib.request
 import flet as ft
 import yt_dlp
 
@@ -13,8 +12,9 @@ COLOR_MINT = "#87c095"
 COLOR_TEXT = "#dbdee1"
 COLOR_MUTED = "#949ba4"
 
-# --- RUTA NATIVA DE ANDROID ---
-RUTA_DESCARGAS = "/storage/emulated/0/Download"
+# --- NUEVA RUTA: CARPETA INTELIGENTE ---
+RUTA_BASE = "/storage/emulated/0/Download"
+RUTA_DESCARGAS = os.path.join(RUTA_BASE, "MintFetch")
 
 def main(page: ft.Page):
     page.title = "MintFetch"
@@ -26,15 +26,6 @@ def main(page: ft.Page):
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
     # --- VENTANA EMERGENTE (MANUAL) ---
-    def cerrar_ayuda(e):
-        dlg_ayuda.open = False
-        page.update()
-
-    def abrir_ayuda(e):
-        page.dialog = dlg_ayuda
-        dlg_ayuda.open = True
-        page.update()
-
     dlg_ayuda = ft.AlertDialog(
         modal=True,
         bgcolor=COLOR_CONSOLE,
@@ -52,13 +43,18 @@ def main(page: ft.Page):
             size=14
         ),
         actions=[
-            ft.TextButton("Entendido", on_click=cerrar_ayuda, style=ft.ButtonStyle(color=COLOR_MINT))
+            # CORRECCIÓN: Usamos page.close() para cerrar
+            ft.TextButton("Entendido", on_click=lambda e: page.close(dlg_ayuda), style=ft.ButtonStyle(color=COLOR_MINT))
         ],
         actions_alignment=ft.MainAxisAlignment.END,
         shape=ft.RoundedRectangleBorder(radius=12)
     )
 
-    # NUEVO: Botón Flotante (CORREGIDO CON CONTENT PARA FLET NUEVO)
+    # CORRECCIÓN: Usamos page.open() para abrir
+    def abrir_ayuda(e):
+        page.open(dlg_ayuda)
+
+    # Botón Flotante
     page.floating_action_button = ft.FloatingActionButton(
         content=ft.Text("?", size=24, weight=ft.FontWeight.BOLD, color=COLOR_MINT),
         bgcolor=COLOR_CONSOLE,
@@ -67,7 +63,6 @@ def main(page: ft.Page):
     )
 
     # --- ELEMENTOS VISUALES ---
-    
     titulo = ft.Text("MintFetch", size=32, weight=ft.FontWeight.BOLD, color=COLOR_MINT)
     subtitulo = ft.Text("Descargador Universal Estructurado", size=13, color=COLOR_MUTED)
 
@@ -86,7 +81,7 @@ def main(page: ft.Page):
         options=[
             ft.dropdown.Option("🎬 Video HD (Mejor Calidad)"),
             ft.dropdown.Option("📱 Video Ligero (Ahorro Datos)"),
-            ft.dropdown.Option("🎵 Solo Audio (Música/Podcast)")
+            ft.dropdown.Option("🎵 Solo Audio (Música M4A)")
         ],
         value="🎬 Video HD (Mejor Calidad)",
         bgcolor=COLOR_CONSOLE,
@@ -105,7 +100,7 @@ def main(page: ft.Page):
     )
 
     consola_texto = ft.Text(
-        "[root@android]~ $ MintFetch v1.0 listo.\n[root@android]~ $ Esperando órdenes...",
+        "[root@android]~ $ MintFetch v1.1 listo.\n[root@android]~ $ Esperando órdenes...",
         font_family="monospace",
         color=COLOR_MINT,
         size=11,
@@ -123,7 +118,6 @@ def main(page: ft.Page):
     firma = ft.Text("Desarrollado por semg_mc © 2026", size=10, color=COLOR_MUTED)
 
     # --- FUNCIONES DEL CEREBRO ---
-
     def actualizar_consola(texto):
         consola_texto.value += f"\n> {texto}"
         page.update()
@@ -150,6 +144,9 @@ def main(page: ft.Page):
         page.update()
 
         def trabajo_descarga():
+            # Crear la carpeta inteligente si no existe
+            os.makedirs(RUTA_DESCARGAS, exist_ok=True)
+            
             max_intentos = 4
             intento_actual = 1
             descarga_exitosa = False
@@ -188,19 +185,19 @@ def main(page: ft.Page):
                         'outtmpl': os.path.join(RUTA_DESCARGAS, '%(title).100s.%(ext)s'),
                     }
 
+                    # --- EL NUEVO CEREBRO DE FORMATOS ---
                     if "Ligero" in seleccion:
-                        opts['format'] = 'best[height<=480]'
+                        opts['format'] = '18/b[height<=480]/b' # Formato pre-ensamblado seguro
                     elif "Audio" in seleccion:
-                        opts['format'] = 'bestaudio'
-                        opts['extract_audio'] = True
+                        opts['format'] = 'm4a/bestaudio/best' # M4A nativo para evitar ffmpeg
                     else:
-                        opts['format'] = 'best'
+                        opts['format'] = 'best' # MP4 HD pre-ensamblado
 
                     with yt_dlp.YoutubeDL(opts) as ydl:
                         ydl.download([url])
 
                     descarga_exitosa = True
-                    actualizar_consola("✅ Operación Exitosa. Archivo en /Download")
+                    actualizar_consola("✅ Operación Exitosa. Archivo en /MintFetch")
                     time.sleep(2)
                     txt_url.value = ""
                     actualizar_consola("✅ Esperando nuevo enlace...")
@@ -211,7 +208,7 @@ def main(page: ft.Page):
                         time.sleep(2)
                         intento_actual += 1
                     else:
-                        actualizar_consola("❌ Error crítico. Enlace roto o IP baneada.")
+                        actualizar_consola("❌ Error crítico. Enlace roto o formato no disponible.")
                         break
             
             reiniciar_interfaz()
