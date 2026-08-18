@@ -58,12 +58,10 @@ def main(page: ft.Page):
         shape=ft.RoundedRectangleBorder(radius=12)
     )
 
-    # NUEVO: Botón Flotante abajo a la derecha (Estilo Android Nativo)
-    # Usamos texto "?" en lugar de un ícono para que Flet jamás lo vuelva a romper xd
+    # NUEVO: Botón Flotante (CORREGIDO CON CONTENT PARA FLET NUEVO)
     page.floating_action_button = ft.FloatingActionButton(
-        text="?",
+        content=ft.Text("?", size=24, weight=ft.FontWeight.BOLD, color=COLOR_MINT),
         bgcolor=COLOR_CONSOLE,
-        color=COLOR_MINT,
         on_click=abrir_ayuda,
         shape=ft.CircleBorder()
     )
