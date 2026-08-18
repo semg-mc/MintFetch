@@ -1,11 +1,11 @@
 name: Compilar MintFetch Android
 
 on:
-  workflow_dispatch: # Te permite darle clic al botón para compilar cuando quieras
+  workflow_dispatch:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest # Usamos servidores Linux de GitHub (Súper rápidos para Android)
+    runs-on: ubuntu-latest
 
     steps:
       - name: Clonar código
@@ -22,7 +22,8 @@ jobs:
           pip install flet
 
       - name: Compilar a APK (La Magia de Android)
-        run: flet build apk
+       
+        run: yes | flet build apk
 
       - name: Subir APK Terminado
         uses: actions/upload-artifact@v4
