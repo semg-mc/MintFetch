@@ -1,0 +1,31 @@
+name: Compilar MintFetch Android
+
+on:
+  workflow_dispatch: # Te permite darle clic al botón para compilar cuando quieras
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest # Usamos servidores Linux de GitHub (Súper rápidos para Android)
+
+    steps:
+      - name: Clonar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar Flet (Motor UI)
+        run: |
+          python -m pip install --upgrade pip
+          pip install flet
+
+      - name: Compilar a APK (La Magia de Android)
+        run: flet build apk
+
+      - name: Subir APK Terminado
+        uses: actions/upload-artifact@v4
+        with:
+          name: MintFetch-Android
+          path: build/apk/
