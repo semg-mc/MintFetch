@@ -33,7 +33,7 @@ def main(page: ft.Page):
         text_size=14,
     )
 
-    # 3. Botón de Acción (CORREGIDO A PRUEBA DE BUGS)
+    # 3. Botón de Acción (A PRUEBA DE BUGS)
     btn_fetch = ft.ElevatedButton(
         content=ft.Text("EJECUTAR FETCH", weight=ft.FontWeight.BOLD, color=COLOR_CONSOLE),
         bgcolor=COLOR_MINT,
@@ -56,8 +56,8 @@ def main(page: ft.Page):
         padding=15,
         border_radius=12,
         width=float('inf'), # Se estira a los lados
-        height=180,
-        alignment=ft.alignment.top_left
+        height=180
+        # ¡Eliminamos el alignment viejo! El texto se acomoda solo arriba a la izquierda.
     )
 
     # Agregamos todo a la pantalla ordenado con espacios
