@@ -58,17 +58,19 @@ def main(page: ft.Page):
         shape=ft.RoundedRectangleBorder(radius=12)
     )
 
+    # NUEVO: Botón Flotante abajo a la derecha (Estilo Android Nativo)
+    # Usamos texto "?" en lugar de un ícono para que Flet jamás lo vuelva a romper xd
+    page.floating_action_button = ft.FloatingActionButton(
+        text="?",
+        bgcolor=COLOR_CONSOLE,
+        color=COLOR_MINT,
+        on_click=abrir_ayuda,
+        shape=ft.CircleBorder()
+    )
+
     # --- ELEMENTOS VISUALES ---
     
-    # CORRECCIÓN: Usamos el string directo "help_outline" para evitar bugs de Flet
-    cabecera = ft.Row(
-        [
-            ft.Text("MintFetch", size=32, weight=ft.FontWeight.BOLD, color=COLOR_MINT),
-            ft.IconButton(icon="help_outline", icon_color=COLOR_MUTED, tooltip="Instrucciones", on_click=abrir_ayuda)
-        ],
-        alignment=ft.MainAxisAlignment.CENTER
-    )
-    
+    titulo = ft.Text("MintFetch", size=32, weight=ft.FontWeight.BOLD, color=COLOR_MINT)
     subtitulo = ft.Text("Descargador Universal Estructurado", size=13, color=COLOR_MUTED)
 
     txt_url = ft.TextField(
@@ -222,7 +224,7 @@ def main(page: ft.Page):
 
     # ENSAMBLAJE FINAL
     page.add(
-        cabecera, 
+        titulo, 
         subtitulo,
         ft.Container(height=15),
         txt_url,
