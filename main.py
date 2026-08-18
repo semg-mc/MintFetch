@@ -60,11 +60,11 @@ def main(page: ft.Page):
 
     # --- ELEMENTOS VISUALES ---
     
-    # NUEVO: Fila para agrupar el título y el botón de ayuda
+    # CORRECCIÓN: Usamos el string directo "help_outline" para evitar bugs de Flet
     cabecera = ft.Row(
         [
             ft.Text("MintFetch", size=32, weight=ft.FontWeight.BOLD, color=COLOR_MINT),
-            ft.IconButton(icon=ft.icons.HELP_OUTLINE, icon_color=COLOR_MUTED, tooltip="Instrucciones", on_click=abrir_ayuda)
+            ft.IconButton(icon="help_outline", icon_color=COLOR_MUTED, tooltip="Instrucciones", on_click=abrir_ayuda)
         ],
         alignment=ft.MainAxisAlignment.CENTER
     )
@@ -222,7 +222,7 @@ def main(page: ft.Page):
 
     # ENSAMBLAJE FINAL
     page.add(
-        cabecera, # Metemos la fila que contiene el título y el botón de ayuda
+        cabecera, 
         subtitulo,
         ft.Container(height=15),
         txt_url,
@@ -236,3 +236,4 @@ def main(page: ft.Page):
 
 if __name__ == "__main__":
     ft.app(main)
+    
