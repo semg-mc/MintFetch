@@ -21,8 +21,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install flet
 
+      - name: Preparar Ícono Oficial
+        run: |
+          mkdir assets
+          mv icon.png assets/
+
       - name: Compilar a APK (La Magia de Android)
-       
         run: yes | flet build apk
 
       - name: Subir APK Terminado
