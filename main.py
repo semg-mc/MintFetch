@@ -6,14 +6,14 @@ import urllib.request
 import flet as ft
 import yt_dlp
 
-
+# --- LA PALETA MINTFETCH ---
 COLOR_BG = "#313338"
 COLOR_CONSOLE = "#1e1f22"
 COLOR_MINT = "#87c095"
 COLOR_TEXT = "#dbdee1"
 COLOR_MUTED = "#949ba4"
 
-
+# --- RUTA NATIVA DE ANDROID ---
 RUTA_DESCARGAS = "/storage/emulated/0/Download"
 
 def main(page: ft.Page):
@@ -25,8 +25,50 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
+    # --- VENTANA EMERGENTE (MANUAL) ---
+    def cerrar_ayuda(e):
+        dlg_ayuda.open = False
+        page.update()
+
+    def abrir_ayuda(e):
+        page.dialog = dlg_ayuda
+        dlg_ayuda.open = True
+        page.update()
+
+    dlg_ayuda = ft.AlertDialog(
+        modal=True,
+        bgcolor=COLOR_CONSOLE,
+        title=ft.Text("Manual de Operaciones", color=COLOR_MINT, weight=ft.FontWeight.BOLD, size=20),
+        content=ft.Text(
+            "1. Pega el enlace de tu video o música.\n"
+            "2. Selecciona el formato deseado.\n"
+            "3. Presiona 'EJECUTAR FETCH'.\n\n"
+            "🌐 Plataformas Compatibles:\n"
+            "• YouTube (Videos y Música)\n"
+            "• TikTok (Videos sin marca de agua)\n"
+            "• X (Twitter), Facebook, Instagram\n"
+            "• Reddit, Twitch y muchas más.",
+            color=COLOR_TEXT,
+            size=14
+        ),
+        actions=[
+            ft.TextButton("Entendido", on_click=cerrar_ayuda, style=ft.ButtonStyle(color=COLOR_MINT))
+        ],
+        actions_alignment=ft.MainAxisAlignment.END,
+        shape=ft.RoundedRectangleBorder(radius=12)
+    )
+
+    # --- ELEMENTOS VISUALES ---
     
-    titulo = ft.Text("MintFetch", size=32, weight=ft.FontWeight.BOLD, color=COLOR_MINT)
+    # NUEVO: Fila para agrupar el título y el botón de ayuda
+    cabecera = ft.Row(
+        [
+            ft.Text("MintFetch", size=32, weight=ft.FontWeight.BOLD, color=COLOR_MINT),
+            ft.IconButton(icon=ft.icons.HELP_OUTLINE, icon_color=COLOR_MUTED, tooltip="Instrucciones", on_click=abrir_ayuda)
+        ],
+        alignment=ft.MainAxisAlignment.CENTER
+    )
+    
     subtitulo = ft.Text("Descargador Universal Estructurado", size=13, color=COLOR_MUTED)
 
     txt_url = ft.TextField(
@@ -40,7 +82,6 @@ def main(page: ft.Page):
         text_size=14,
     )
 
-    
     dd_calidad = ft.Dropdown(
         options=[
             ft.dropdown.Option("🎬 Video HD (Mejor Calidad)"),
@@ -71,7 +112,7 @@ def main(page: ft.Page):
     )
 
     consola = ft.Container(
-        content=ft.ListView([consola_texto], auto_scroll=True), 
+        content=ft.ListView([consola_texto], auto_scroll=True),
         bgcolor=COLOR_CONSOLE,
         padding=15,
         border_radius=12,
@@ -79,13 +120,11 @@ def main(page: ft.Page):
         height=150
     )
     
-    
     firma = ft.Text("Desarrollado por semg_mc © 2026", size=10, color=COLOR_MUTED)
 
-    
+    # --- FUNCIONES DEL CEREBRO ---
 
     def actualizar_consola(texto):
-        
         consola_texto.value += f"\n> {texto}"
         page.update()
 
@@ -103,7 +142,6 @@ def main(page: ft.Page):
 
         seleccion = dd_calidad.value
         
-        
         txt_url.disabled = True
         dd_calidad.disabled = True
         btn_fetch.disabled = True
@@ -111,7 +149,6 @@ def main(page: ft.Page):
         consola_texto.value = "[root@android]~ $ Iniciando protocolo de extracción..."
         page.update()
 
-        
         def trabajo_descarga():
             max_intentos = 4
             intento_actual = 1
@@ -119,8 +156,7 @@ def main(page: ft.Page):
 
             while intento_actual <= max_intentos and not descarga_exitosa:
                 try:
-                    
-                    estado_ui = {"ultimo_p": -10} 
+                    estado_ui = {"ultimo_p": -10}
 
                     def hook_progreso(d):
                         if d['status'] == 'downloading':
@@ -143,7 +179,6 @@ def main(page: ft.Page):
                         def warning(self, msg): pass
                         def error(self, msg): pass
 
-                    
                     opts = {
                         'quiet': True,
                         'progress_hooks': [hook_progreso],
@@ -153,16 +188,14 @@ def main(page: ft.Page):
                         'outtmpl': os.path.join(RUTA_DESCARGAS, '%(title).100s.%(ext)s'),
                     }
 
-                    
                     if "Ligero" in seleccion:
-                        opts['format'] = 'best[height<=480]' 
+                        opts['format'] = 'best[height<=480]'
                     elif "Audio" in seleccion:
                         opts['format'] = 'bestaudio'
-                        opts['extract_audio'] = True 
+                        opts['extract_audio'] = True
                     else:
-                        opts['format'] = 'best' 
+                        opts['format'] = 'best'
 
-                    
                     with yt_dlp.YoutubeDL(opts) as ydl:
                         ydl.download([url])
 
@@ -173,7 +206,6 @@ def main(page: ft.Page):
                     actualizar_consola("✅ Esperando nuevo enlace...")
 
                 except Exception as ex:
-                    # EL BUCLE TERCO
                     if intento_actual < max_intentos:
                         actualizar_consola(f"⚠️ Servidor hostil. Reintentando ({intento_actual}/{max_intentos})")
                         time.sleep(2)
@@ -184,15 +216,13 @@ def main(page: ft.Page):
             
             reiniciar_interfaz()
 
-        
         threading.Thread(target=trabajo_descarga, daemon=True).start()
 
-    
     btn_fetch.on_click = ejecutar_fetch
 
-    
+    # ENSAMBLAJE FINAL
     page.add(
-        titulo,
+        cabecera, # Metemos la fila que contiene el título y el botón de ayuda
         subtitulo,
         ft.Container(height=15),
         txt_url,
@@ -201,7 +231,7 @@ def main(page: ft.Page):
         btn_fetch,
         ft.Container(height=15),
         consola,
-        firma 
+        firma
     )
 
 if __name__ == "__main__":
