@@ -1,75 +1,207 @@
+import os
+import re
+import time
+import threading
+import urllib.request
 import flet as ft
+import yt_dlp
 
-# --- LA PALETA MINTFETCH (Estilo Discord/LMDE) ---
-COLOR_BG = "#313338"        # Gris azulado oscuro (Fondo principal)
-COLOR_CONSOLE = "#1e1f22"   # Gris muy profundo (Fondo de terminal y cajas)
-COLOR_MINT = "#87c095"      # Verde Mint (Acentos y botones)
-COLOR_TEXT = "#dbdee1"      # Blanco ceniza (Lectura cómoda)
-COLOR_MUTED = "#949ba4"     # Gris tenue (Subtítulos)
+
+COLOR_BG = "#313338"
+COLOR_CONSOLE = "#1e1f22"
+COLOR_MINT = "#87c095"
+COLOR_TEXT = "#dbdee1"
+COLOR_MUTED = "#949ba4"
+
+
+RUTA_DESCARGAS = "/storage/emulated/0/Download"
 
 def main(page: ft.Page):
-    # Configuración de la pantalla del celular
     page.title = "MintFetch"
     page.bgcolor = COLOR_BG
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 25
-    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-
-    # --- ELEMENTOS VISUALES ---
     
-    # 1. Cabecera
+    page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
+    page.vertical_alignment = ft.MainAxisAlignment.CENTER
+
+    
     titulo = ft.Text("MintFetch", size=32, weight=ft.FontWeight.BOLD, color=COLOR_MINT)
     subtitulo = ft.Text("Descargador Universal Estructurado", size=13, color=COLOR_MUTED)
 
-    # 2. Caja de Enlace (Minimalista, sin bordes toscos)
     txt_url = ft.TextField(
         hint_text="[ Pega el enlace del video aquí ]",
         hint_style=ft.TextStyle(color=COLOR_MUTED),
         bgcolor=COLOR_CONSOLE,
         border_color="transparent",
-        focused_border_color=COLOR_MINT, # Brilla en verde al tocarlo
+        focused_border_color=COLOR_MINT,
         color=COLOR_TEXT,
         border_radius=12,
         text_size=14,
     )
 
-    # 3. Botón de Acción (A PRUEBA DE BUGS)
+    
+    dd_calidad = ft.Dropdown(
+        options=[
+            ft.dropdown.Option("🎬 Video HD (Mejor Calidad)"),
+            ft.dropdown.Option("📱 Video Ligero (Ahorro Datos)"),
+            ft.dropdown.Option("🎵 Solo Audio (Música/Podcast)")
+        ],
+        value="🎬 Video HD (Mejor Calidad)",
+        bgcolor=COLOR_CONSOLE,
+        border_color="transparent",
+        focused_border_color=COLOR_MINT,
+        color=COLOR_TEXT,
+        border_radius=12,
+        text_size=13,
+    )
+
     btn_fetch = ft.ElevatedButton(
         content=ft.Text("EJECUTAR FETCH", weight=ft.FontWeight.BOLD, color=COLOR_CONSOLE),
         bgcolor=COLOR_MINT,
-        style=ft.ButtonStyle(
-            shape=ft.RoundedRectangleBorder(radius=12),
-            padding=18,
-        ),
+        style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=12), padding=18),
         width=300
     )
 
-    # 4. Consola de Procesos Simulada (Tu terminal Bash)
+    consola_texto = ft.Text(
+        "[root@android]~ $ MintFetch v1.0 listo.\n[root@android]~ $ Esperando órdenes...",
+        font_family="monospace",
+        color=COLOR_MINT,
+        size=11,
+    )
+
     consola = ft.Container(
-        content=ft.Text(
-            "[root@android]~ $ MintFetch v1.0 iniciado...\n[root@android]~ $ Esperando órdenes_",
-            font_family="monospace", # Letra de programador
-            color=COLOR_MINT,
-            size=12,
-        ),
+        content=ft.ListView([consola_texto], auto_scroll=True), 
         bgcolor=COLOR_CONSOLE,
         padding=15,
         border_radius=12,
-        width=float('inf'), # Se estira a los lados
-        height=180
-        # ¡Eliminamos el alignment viejo! El texto se acomoda solo arriba a la izquierda.
+        width=float('inf'),
+        height=150
     )
+    
+    
+    firma = ft.Text("Desarrollado por semg_mc © 2026", size=10, color=COLOR_MUTED)
 
-    # Agregamos todo a la pantalla ordenado con espacios
+    
+
+    def actualizar_consola(texto):
+        
+        consola_texto.value += f"\n> {texto}"
+        page.update()
+
+    def reiniciar_interfaz():
+        txt_url.disabled = False
+        dd_calidad.disabled = False
+        btn_fetch.disabled = False
+        btn_fetch.bgcolor = COLOR_MINT
+        page.update()
+
+    def ejecutar_fetch(e):
+        url = txt_url.value.strip()
+        if not url:
+            return
+
+        seleccion = dd_calidad.value
+        
+        
+        txt_url.disabled = True
+        dd_calidad.disabled = True
+        btn_fetch.disabled = True
+        btn_fetch.bgcolor = COLOR_MUTED
+        consola_texto.value = "[root@android]~ $ Iniciando protocolo de extracción..."
+        page.update()
+
+        
+        def trabajo_descarga():
+            max_intentos = 4
+            intento_actual = 1
+            descarga_exitosa = False
+
+            while intento_actual <= max_intentos and not descarga_exitosa:
+                try:
+                    
+                    estado_ui = {"ultimo_p": -10} 
+
+                    def hook_progreso(d):
+                        if d['status'] == 'downloading':
+                            ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+                            p_str = ansi_escape.sub('', d.get('_percent_str', '0.0%')).replace('%', '').strip()
+                            try:
+                                p = float(p_str)
+                                if p - estado_ui["ultimo_p"] >= 10:
+                                    actualizar_consola(f"Extrayendo datos: {p_str}%")
+                                    estado_ui["ultimo_p"] = p
+                            except ValueError:
+                                pass
+                        elif d['status'] == 'finished':
+                            actualizar_consola("Descarga completa. Finalizando archivo...")
+                            page.update()
+
+                    class InterceptorLogger:
+                        def debug(self, msg): pass
+                        def info(self, msg): pass
+                        def warning(self, msg): pass
+                        def error(self, msg): pass
+
+                    
+                    opts = {
+                        'quiet': True,
+                        'progress_hooks': [hook_progreso],
+                        'logger': InterceptorLogger(),
+                        'nocheckcertificate': True,
+                        'geo_bypass': True,
+                        'outtmpl': os.path.join(RUTA_DESCARGAS, '%(title).100s.%(ext)s'),
+                    }
+
+                    
+                    if "Ligero" in seleccion:
+                        opts['format'] = 'best[height<=480]' 
+                    elif "Audio" in seleccion:
+                        opts['format'] = 'bestaudio'
+                        opts['extract_audio'] = True 
+                    else:
+                        opts['format'] = 'best' 
+
+                    
+                    with yt_dlp.YoutubeDL(opts) as ydl:
+                        ydl.download([url])
+
+                    descarga_exitosa = True
+                    actualizar_consola("✅ Operación Exitosa. Archivo en /Download")
+                    time.sleep(2)
+                    txt_url.value = ""
+                    actualizar_consola("✅ Esperando nuevo enlace...")
+
+                except Exception as ex:
+                    # EL BUCLE TERCO
+                    if intento_actual < max_intentos:
+                        actualizar_consola(f"⚠️ Servidor hostil. Reintentando ({intento_actual}/{max_intentos})")
+                        time.sleep(2)
+                        intento_actual += 1
+                    else:
+                        actualizar_consola("❌ Error crítico. Enlace roto o IP baneada.")
+                        break
+            
+            reiniciar_interfaz()
+
+        
+        threading.Thread(target=trabajo_descarga, daemon=True).start()
+
+    
+    btn_fetch.on_click = ejecutar_fetch
+
+    
     page.add(
         titulo,
         subtitulo,
-        ft.Container(height=20),
+        ft.Container(height=15),
         txt_url,
-        ft.Container(height=10),
+        dd_calidad,
+        ft.Container(height=5),
         btn_fetch,
-        ft.Container(height=20),
-        consola
+        ft.Container(height=15),
+        consola,
+        firma 
     )
 
 if __name__ == "__main__":
