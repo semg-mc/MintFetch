@@ -77,9 +77,9 @@ def main(page: ft.Page):
         width=320 
     )
 
-    # --- 4. LA CONSOLA ---
+    # --- 4. LA CONSOLA (¡SIN BORDES PROBLEMÁTICOS!) ---
     consola_texto = ft.Text(
-        "[root@android]~ $ MintFetch v3.0 [Tanque] cargado.\n[root@android]~ $ Esperando enlace...",
+        "[root@android]~ $ MintFetch v3.1 [Tanque] cargado.\n[root@android]~ $ Esperando enlace...",
         font_family="monospace",
         color=COLOR_MINT,
         size=12,
@@ -91,8 +91,8 @@ def main(page: ft.Page):
         padding=15,
         border_radius=10,
         height=160,
-        width=320,
-        border=ft.border.all(1, COLOR_SURFACE) 
+        width=320
+        # ¡LÍNEA DE BORDE ELIMINADA PARA EVITAR CRASHEOS!
     )
 
     firma = ft.Text("Desarrollado por semg_mc © 2026", size=11, color=COLOR_MUTED)
@@ -117,12 +117,12 @@ def main(page: ft.Page):
                 # MOTOR MODO TANQUE
                 ydl_opts = {
                     'quiet': True,
-                    'no_warnings': True, # ¡Ignora alertas tontas de TikTok para no asustar a la app!
+                    'no_warnings': True, 
                     'nocheckcertificate': True,
                     'geo_bypass': True,
                     'outtmpl': os.path.join(RUTA_DESCARGAS, '%(title).50s.%(ext)s'),
-                    'format': 'best', # Simplemente lo mejor que tenga el servidor
-                    'extractor_args': {'youtube': {'player_client': ['ios', 'android']}}, # Salto del Error 403 de YouTube
+                    'format': 'best', 
+                    'extractor_args': {'youtube': {'player_client': ['ios', 'android']}}, 
                 }
                 
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
