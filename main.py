@@ -20,7 +20,7 @@ def main(page: ft.Page):
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
-    # --- VENTANA EMERGENTE (COMPATIBLE CON TODAS LAS VERSIONES) ---
+    
     dlg_ayuda = ft.AlertDialog(
         modal=True,
         bgcolor=COLOR_CONSOLE,
@@ -64,7 +64,7 @@ def main(page: ft.Page):
         
         def trabajo():
             try:
-                # Disfraz agresivo para evitar error 403
+                
                 opts = {
                     'quiet': True,
                     'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
