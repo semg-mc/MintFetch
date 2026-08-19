@@ -4,38 +4,36 @@ import flet as ft
 import yt_dlp
 
 # --- PALETA DE COLORES (LMDE / DISCORD / STEAM) ---
-COLOR_BG = "#1e1f22"         # Fondo hiper oscuro (Discord)
-COLOR_SURFACE = "#2b2d31"    # Cajas y tarjetas (Steam)
-COLOR_MINT = "#87c095"       # Verde Linux Mint (Acentos)
-COLOR_TEXT = "#dbdee1"       # Texto claro
-COLOR_MUTED = "#949ba4"      # Texto secundario
-COLOR_TERMINAL = "#000000"   # Fondo de consola negro puro
+COLOR_BG = "#1e1f22"         
+COLOR_SURFACE = "#2b2d31"    
+COLOR_MINT = "#87c095"       
+COLOR_TEXT = "#dbdee1"       
+COLOR_MUTED = "#949ba4"      
+COLOR_TERMINAL = "#000000"   
 
 RUTA_DESCARGAS = "/storage/emulated/0/Download"
 
 def main(page: ft.Page):
-    # Configuración de la ventana
     page.title = "MintFetch"
     page.bgcolor = COLOR_BG
     page.theme_mode = ft.ThemeMode.DARK
     page.padding = 20
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.vertical_alignment = ft.MainAxisAlignment.START # Alineado arriba para que fluya natural
+    page.vertical_alignment = ft.MainAxisAlignment.START 
 
     # --- 1. CABECERA ---
     cabecera = ft.Column(
         controls=[
             ft.Text("MintFetch", size=36, weight=ft.FontWeight.W_900, color=COLOR_MINT),
-            ft.Text("Descargador Universal Estructurado", size=14, color=COLOR_MUTED, weight=ft.FontWeight.W_500),
+            ft.Text("Modo Tanque - Máxima Calidad Automática", size=13, color=COLOR_MUTED, weight=ft.FontWeight.W_500),
         ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=0
     )
 
-    # --- 2. EL MENÚ DE AYUDA (¡Tu idea del desplegable!) ---
-    # Esto jamás va a crashear porque es parte de la misma pantalla.
+    # --- 2. EL MENÚ DE AYUDA (Indestructible) ---
     guia_desplegable = ft.ExpansionTile(
-        title=ft.Text("📖 Guía y Plataformas Compatibles", color=COLOR_TEXT, weight=ft.FontWeight.BOLD),
+        title=ft.Text("📖 Guía y Compatibilidad", color=COLOR_TEXT, weight=ft.FontWeight.BOLD),
         collapsed_text_color=COLOR_MUTED,
         text_color=COLOR_MINT,
         icon_color=COLOR_MINT,
@@ -43,15 +41,10 @@ def main(page: ft.Page):
         controls=[
             ft.Container(
                 content=ft.Text(
-                    "INSTRUCCIONES:\n"
-                    "1. Pega el enlace de tu video o música.\n"
-                    "2. Selecciona la calidad deseada.\n"
-                    "3. Presiona 'EJECUTAR FETCH'.\n\n"
-                    "PLATAFORMAS SOPORTADAS:\n"
-                    "• YouTube (Videos y Música)\n"
-                    "• TikTok (Baja sin marca de agua)\n"
-                    "• Facebook, Instagram (Reels), X (Twitter)\n"
-                    "• Reddit, Twitch (Clips).",
+                    "MODO TANQUE ACTIVADO:\n"
+                    "El sistema detectará y descargará automáticamente la mejor calidad disponible (Audio+Video).\n\n"
+                    "SOPORTA:\n"
+                    "• YouTube, TikTok, IG, FB, X, Reddit, Twitch.",
                     color=COLOR_TEXT, size=13
                 ),
                 padding=15,
@@ -61,7 +54,7 @@ def main(page: ft.Page):
         ]
     )
 
-    # --- 3. CAJAS DE ENTRADA (Simétricas y Elegantes) ---
+    # --- 3. CAJA DE ENTRADA (SIMPLIFICADA) ---
     txt_url = ft.TextField(
         hint_text="[ Pega el enlace aquí ]",
         hint_style=ft.TextStyle(color=COLOR_MUTED),
@@ -71,22 +64,7 @@ def main(page: ft.Page):
         color=COLOR_TEXT,
         border_radius=10,
         text_size=15,
-        width=320 # Ancho fijo para simetría
-    )
-
-    dd_calidad = ft.Dropdown(
-        options=[
-            ft.dropdown.Option("🎬 Video HD (Mejor Calidad)"),
-            ft.dropdown.Option("📱 Video Ligero (360p - Estable)"),
-            ft.dropdown.Option("🎵 Solo Audio (Música M4A)")
-        ],
-        value="🎬 Video HD (Mejor Calidad)",
-        bgcolor=COLOR_SURFACE,
-        border_color="transparent",
-        focused_border_color=COLOR_MINT,
-        color=COLOR_TEXT,
-        border_radius=10,
-        width=320 # Ancho fijo para simetría
+        width=320 
     )
 
     btn_fetch = ft.ElevatedButton(
@@ -96,12 +74,12 @@ def main(page: ft.Page):
             shape=ft.RoundedRectangleBorder(radius=10),
             padding=20,
         ),
-        width=320 # Sigue la simetría
+        width=320 
     )
 
-    # --- 4. LA CONSOLA (Estilo Linux Recuperado) ---
+    # --- 4. LA CONSOLA ---
     consola_texto = ft.Text(
-        "[root@android]~ $ MintFetch v2.0 cargado.\n[root@android]~ $ Sistema listo.",
+        "[root@android]~ $ MintFetch v3.0 [Tanque] cargado.\n[root@android]~ $ Esperando enlace...",
         font_family="monospace",
         color=COLOR_MINT,
         size=12,
@@ -109,19 +87,18 @@ def main(page: ft.Page):
 
     consola = ft.Container(
         content=ft.ListView([consola_texto], auto_scroll=True),
-        bgcolor=COLOR_TERMINAL, # Negro puro de terminal
+        bgcolor=COLOR_TERMINAL, 
         padding=15,
         border_radius=10,
         height=160,
         width=320,
-        border=ft.border.all(1, COLOR_SURFACE) # Borde sutil
+        border=ft.border.all(1, COLOR_SURFACE) 
     )
 
     firma = ft.Text("Desarrollado por semg_mc © 2026", size=11, color=COLOR_MUTED)
 
     # --- FUNCIONES DEL CEREBRO ---
     def log(texto):
-        # Le regresamos la personalidad a cada línea que imprime
         consola_texto.value += f"\n[root@android]~ $ {texto}"
         page.update()
 
@@ -129,55 +106,42 @@ def main(page: ft.Page):
         url = txt_url.value.strip()
         if not url: return
         
-        # Bloqueamos UI
         btn_fetch.disabled = True
         btn_fetch.bgcolor = COLOR_MUTED
         txt_url.disabled = True
-        dd_calidad.disabled = True
-        log("Iniciando conexión con los servidores...")
+        log("Iniciando extracción de máxima calidad...")
         page.update()
         
         def run():
             try:
-                # El nuevo motor disfrazado de App de Android
+                # MOTOR MODO TANQUE
                 ydl_opts = {
                     'quiet': True,
+                    'no_warnings': True, # ¡Ignora alertas tontas de TikTok para no asustar a la app!
                     'nocheckcertificate': True,
                     'geo_bypass': True,
                     'outtmpl': os.path.join(RUTA_DESCARGAS, '%(title).50s.%(ext)s'),
-                    # EL TRUCO MAESTRO: Le decimos a YouTube que somos un celular, no un bot
-                    'extractor_args': {'youtube': {'player_client': ['android', 'web']}},
+                    'format': 'best', # Simplemente lo mejor que tenga el servidor
+                    'extractor_args': {'youtube': {'player_client': ['ios', 'android']}}, # Salto del Error 403 de YouTube
                 }
                 
-                seleccion = dd_calidad.value
-                if "Ligero" in seleccion:
-                    ydl_opts['format'] = '18' 
-                elif "Audio" in seleccion:
-                    ydl_opts['format'] = 'm4a/bestaudio'
-                else:
-                    ydl_opts['format'] = 'best'
-
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([url])
                 
                 log("✅ Operación Exitosa. Archivo en /Download")
-                txt_url.value = "" # Limpiamos la caja al terminar
+                txt_url.value = "" 
                 
             except Exception as ex:
-                # Extraemos solo el error importante
-                error_msg = str(ex).split(":")[-1].strip()[:40]
-                log(f"❌ Error: {error_msg}...")
+                error_msg = str(ex).split(":")[-1].strip()[:50]
+                log(f"❌ Error Real: {error_msg}...")
             
             finally:
-                # ESTA ES LA CURA ZOMBIE: Pase lo que pase (éxito o error), la UI se desbloquea
                 btn_fetch.disabled = False
                 btn_fetch.bgcolor = COLOR_MINT
                 txt_url.disabled = False
-                dd_calidad.disabled = False
-                log("Esperando nuevas órdenes_")
+                log("Sistema listo para nuevo enlace.")
                 page.update()
         
-        # Lanzamos el hilo
         threading.Thread(target=run, daemon=True).start()
 
     btn_fetch.on_click = accion_descarga
@@ -187,10 +151,9 @@ def main(page: ft.Page):
         ft.Container(height=10),
         cabecera,
         ft.Container(height=10),
-        guia_desplegable, # El acordeón de ayuda
+        guia_desplegable, 
         ft.Container(height=10),
         txt_url,
-        dd_calidad,
         ft.Container(height=5),
         btn_fetch,
         ft.Container(height=10),
