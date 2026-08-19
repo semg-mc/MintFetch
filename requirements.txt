@@ -1,3 +1,3 @@
 flet
-yt-dlp>=2024.08.01
+yt-dlp
 certifi
